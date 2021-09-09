@@ -50,7 +50,6 @@ class CocoDataset(CustomDataset):
                 'Run pip uninstall pycocotools first. Then run pip '
                 'install mmpycocotools to install open-mmlab forked '
                 'pycocotools.')
-
         self.coco = COCO(ann_file)
         self.cat_ids = self.coco.get_cat_ids(cat_names=self.CLASSES)
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}

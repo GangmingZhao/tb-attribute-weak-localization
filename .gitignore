@@ -19,6 +19,10 @@ lib64/
 parts/
 sdist/
 var/
+data/
+results/
+work_dirs/
+work_dirs_/
 wheels/
 *.egg-info/
 .installed.cfg

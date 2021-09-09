@@ -70,7 +70,6 @@ class CustomDataset(Dataset):
         self.test_mode = test_mode
         self.filter_empty_gt = filter_empty_gt
         self.CLASSES = self.get_classes(classes)
-
         # join paths if data_root is specified
         if self.data_root is not None:
             if not osp.isabs(self.ann_file):
@@ -85,7 +84,7 @@ class CustomDataset(Dataset):
                                               self.proposal_file)
         # load annotations (and proposals)
         self.data_infos = self.load_annotations(self.ann_file)
-
+        
         if self.proposal_file is not None:
             self.proposals = self.load_proposals(self.proposal_file)
         else:
@@ -206,7 +205,6 @@ class CustomDataset(Dataset):
             dict: Training data and annotation after pipeline with new keys \
                 introduced by pipeline.
         """
-
         img_info = self.data_infos[idx]
         ann_info = self.get_ann_info(idx)
         results = dict(img_info=img_info, ann_info=ann_info)

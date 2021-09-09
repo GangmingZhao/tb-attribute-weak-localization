@@ -1,6 +1,7 @@
 from .builder import DATASETS, PIPELINES, build_dataloader, build_dataset
 from .cityscapes import CityscapesDataset
 from .coco import CocoDataset
+from .tb import TBDataset
 from .custom import CustomDataset
 from .dataset_wrappers import (ClassBalancedDataset, ConcatDataset,
                                RepeatDataset)
@@ -14,7 +15,7 @@ from .wider_face import WIDERFaceDataset
 from .xml_style import XMLDataset
 
 __all__ = [
-    'CustomDataset', 'XMLDataset', 'CocoDataset', 'DeepFashionDataset',
+    'CustomDataset', 'XMLDataset', 'CocoDataset', 'TBDataset', 'DeepFashionDataset',
     'VOCDataset', 'CityscapesDataset', 'LVISDataset', 'LVISV05Dataset',
     'LVISV1Dataset', 'GroupSampler', 'DistributedGroupSampler',
     'DistributedSampler', 'build_dataloader', 'ConcatDataset', 'RepeatDataset',
