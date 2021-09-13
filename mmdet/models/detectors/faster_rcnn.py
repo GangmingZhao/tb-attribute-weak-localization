@@ -29,6 +29,17 @@ class FasterRCNN(TwoStageDetector):
             test_cfg=test_cfg,
             pretrained=pretrained)
 
+def channel_shuffle(x, groups=2):
+    src_shape = x.shape
+    new_shape = list(x.shape)
+    new_shape[1] = groups
+    new_shape.insert(2, x.size(1) // groups)
+
+    x = x.view(*new_shape)
+    x = torch.transpose(x, 1, 2).contiguous()
+    x = x.view(*src_shape)
+    return x
+
 class AttrHead(nn.Module):
     
     def __init__(self,
@@ -37,6 +48,7 @@ class AttrHead(nn.Module):
                  num_classes=8):
         super(AttrHead, self).__init__()
         
+        '''
         self.conv1 = ConvModule(
             in_channels,
             out_channels,
@@ -59,13 +71,68 @@ class AttrHead(nn.Module):
         )
         
         self.fc = nn.Linear(out_channels, num_classes)
+        '''
+        out_channels = 256
+        self.num_classes = num_classes
+        self.conv1 = ConvModule(
+            in_channels,
+            num_classes*out_channels,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            norm_cfg=dict(type='BN'),
+            act_cfg=dict(type='ReLU'),
+            inplace=False
+        )
+        
+        self.conv2 = ConvModule(
+            num_classes*out_channels,
+            num_classes*out_channels,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            groups = num_classes,
+            norm_cfg=dict(type='BN'),
+            act_cfg=dict(type='ReLU'),
+            inplace=False
+        )
+        
+        self.conv3 = ConvModule(
+            num_classes*out_channels,
+            num_classes*out_channels,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            groups = num_classes,
+            norm_cfg=dict(type='BN'),
+            act_cfg=dict(type='ReLU'),
+            inplace=False
+        )
+        
+        self.fc = nn.Linear(out_channels, 1)
+        
         
     def forward(self, x):
+        #x = self.conv1(x)
+        #x = self.conv2(x)
+        #x = F.adaptive_avg_pool2d(x, 1)
+        #x = x.view(x.size(0), -1)
+        #x = self.fc(x)
+        
         x = self.conv1(x)
         x = self.conv2(x)
+        x = channel_shuffle(x, self.num_classes)
+        x = self.conv3(x)
+        
+        B, C, H, W = x.size()
+        x = x.view(B, self.num_classes, C//self.num_classes, H, W)
+        x = x.view(-1, C//self.num_classes, H, W)
+       
         x = F.adaptive_avg_pool2d(x, 1)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
+        x = x.view(B, -1)
+        
         return x
         
 @DETECTORS.register_module()
