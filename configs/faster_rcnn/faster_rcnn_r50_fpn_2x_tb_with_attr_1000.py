@@ -15,6 +15,7 @@ lr_config = dict(
         warmup_ratio=0.001,
         step=[25600, 32000])
 
+data = dict(samples_per_gpu=4)
 # Runner type
 runner = dict(_delete_=True, type='IterBasedRunner', max_iters=38400)
 checkpoint_config = dict(interval=2000)

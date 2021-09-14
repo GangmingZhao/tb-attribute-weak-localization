@@ -40,6 +40,63 @@ def channel_shuffle(x, groups=2):
     x = x.view(*src_shape)
     return x
 
+class AttrFusion(nn.Module):
+    
+    def __init__(self, 
+                 in_channels=256,
+                 mid_channels=256,
+                 num_classes=8):
+        super(AttrFusion, self).__init__()
+        
+        self.num_classes = num_classes
+        self.mlp_f = nn.Linear(in_channels, mid_channels)
+        self.mlp_a = nn.Linear(in_channels, mid_channels)
+        self.relu = nn.ReLU(inplace=True)
+        
+        self.feat_convs = nn.ModuleList()
+        for i in range(5):
+            conv = ConvModule(
+                num_classes*in_channels,
+                num_classes*in_channels,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                groups = num_classes,
+                norm_cfg=dict(type='BN'),
+                act_cfg=dict(type='ReLU'),
+                inplace=False
+            )
+            self.feat_convs.append(conv)
+        
+    def forward(self, feats, attr_feat):
+        
+        feats = list(feats)
+        avg_attr = F.avg_pool2d(attr_feat, (attr_feat.size(2), attr_feat.size(3)), stride=(attr_feat.size(2), attr_feat.size(3)))
+        avg_attr = avg_attr.view(avg_attr.size(0), self.num_classes, -1)
+        avg_attr = self.mlp_a(avg_attr)
+        for i, x in enumerate(feats):
+            
+            B, C, H, W = x.size()
+            
+            avg_x = F.avg_pool2d(x, (x.size(2), x.size(3)), stride=(x.size(2), x.size(3)))
+            avg_x = self.mlp_f(avg_x.view(B,-1))
+            
+            attn = (avg_attr @ avg_x.unsqueeze(-1)).squeeze(-1) #B*N
+           
+            y = F.interpolate(attr_feat, size=(H, W), mode='bilinear', align_corners=True)
+            y = self.feat_convs[i](y)
+            y = y.view(B, self.num_classes, -1, H, W)
+            
+            attn = F.softmax(attn,-1).unsqueeze(2).unsqueeze(3).unsqueeze(4).expand_as(y)
+            
+            y = (y * attn).sum(1)
+            
+            feats[i] = self.relu(x + y)
+        
+        return tuple(feats)
+            
+    
+
 class AttrHead(nn.Module):
     
     def __init__(self,
@@ -122,10 +179,10 @@ class AttrHead(nn.Module):
         x = self.conv1(x)
         x = self.conv2(x)
         x = channel_shuffle(x, self.num_classes)
-        x = self.conv3(x)
+        feat = self.conv3(x)
         
         B, C, H, W = x.size()
-        x = x.view(B, self.num_classes, C//self.num_classes, H, W)
+        x = feat.view(B, self.num_classes, C//self.num_classes, H, W)
         x = x.view(-1, C//self.num_classes, H, W)
        
         x = F.adaptive_avg_pool2d(x, 1)
@@ -133,7 +190,7 @@ class AttrHead(nn.Module):
         x = self.fc(x)
         x = x.view(B, -1)
         
-        return x
+        return x, feat
         
 @DETECTORS.register_module()
 class FasterRCNN_TB(TwoStageDetector):
@@ -160,17 +217,21 @@ class FasterRCNN_TB(TwoStageDetector):
         if self.with_attr:
             self.attr_head = AttrHead()
             self.attr_loss = CrossEntropyLoss(use_sigmoid=True)
-        
+            self.attr_fusion = AttrFusion()
     
     def extract_feat(self, img):
         """Directly extract features from the backbone+neck."""
         x = self.backbone(img)
         
         if self.with_attr:
-            attr_x = self.attr_head(x[-1])
+            attr_x, attr_feat = self.attr_head(x[-1])
             
         if self.with_neck:
             x = self.neck(x)
+            
+            if self.with_attr:
+                x = self.attr_fusion(x, attr_feat)
+            
             
         return x, attr_x if self.with_attr else x
     
