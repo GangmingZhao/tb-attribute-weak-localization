@@ -7,6 +7,7 @@ The medical dataset will be processed for publication. We will make it clearer a
 ## Paper Title: 
 Computer-aided Tuberculosis Diagnosis with Attribute Reasoning Assistance.
 
+## Paper Information:
 This paper utilizes the attribute information to help Computer-aided Tuberculosis Diagnosis. The attribute information provides a strong medical domain knowledge for deep learning models.
 
 ## If you use this code for your research, please consider citing:
