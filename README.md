@@ -1,8 +1,11 @@
-**News**: We released the codebase of TB-weak-localization with attribute information on mmdetection.
+## News: 
+We released the codebase of TB-weak-localization with attribute information on mmdetection.
 
-**Updating**: The medical dataset will be processed for publication. We will make it clearer as soon as possible.
+## Updating: 
+The medical dataset will be processed for publication. We will make it clearer as soon as possible.
 
-## Paper Title: Computer-aided Tuberculosis Diagnosis with Attribute Reasoning Assistance.
+## Paper Title: 
+Computer-aided Tuberculosis Diagnosis with Attribute Reasoning Assistance.
 
 This paper utilizes the attribute information to help Computer-aided Tuberculosis Diagnosis. The attribute information provides a strong medical domain knowledge for deep learning models.
 
