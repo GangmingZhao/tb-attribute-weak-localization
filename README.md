@@ -1,3 +1,8 @@
+## Congrats:
+Baidu Yun: https://pan.baidu.com/s/15XS7qfQyptaMaf30cMPZNg?pwd=TBAT 
+Code: TBAT 
+
+
 ## News: 
 We released the codebase of TB-weak-localization with attribute information on mmdetection.
 
